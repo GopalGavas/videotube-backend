@@ -1,0 +1,18 @@
+{
+  "name": "videotube-backend",
+  "version": "1.0.0",
+  "description": "A backend for project a videotube where you can upload or watch videos",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "javascript",
+    "mongodb",
+    "express",
+    "node",
+    "jwt"
+  ],
+  "author": "Gopal Gavas",
+  "license": "ISC"
+}
