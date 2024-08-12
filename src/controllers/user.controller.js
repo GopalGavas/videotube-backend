@@ -7,7 +7,6 @@ import { ApiResponse } from "../utils/apiResponse.js";
 const registerUser = asynchandler(async (req, res) => {
   // 1) get user details from frontend
   const { username, fullName, email, password } = req.body;
-  console.log("username: ", username);
 
   // 2) validate information
   if (
@@ -22,6 +21,13 @@ const registerUser = asynchandler(async (req, res) => {
     throw new ApiError(400, "Enter a valid email address");
   }
 
+  if (!/^[a-zA-Z0-9_.]{1,30}$/.test(username)) {
+    throw new ApiError(
+      400,
+      "Username should be between 1 and 30 characters long and can include letters, numbers, underscores, and periods."
+    );
+  }
+
   // 3) check if the user already exists
   const existedUser = await User.findOne({
     $or: [{ username }, { email }],
@@ -33,7 +39,16 @@ const registerUser = asynchandler(async (req, res) => {
 
   // 4) handle file paths
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+
+  let coverImageLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+  }
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is required");
