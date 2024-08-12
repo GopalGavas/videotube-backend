@@ -9,6 +9,7 @@ const registerUser = asynchandler(async (req, res) => {
   const { username, fullName, email, password } = req.body;
   console.log("username: ", username);
 
+  // 2) validate information
   if (
     [username, fullName, email, password].some(
       (fields) => fields?.trim() === ""
@@ -21,6 +22,7 @@ const registerUser = asynchandler(async (req, res) => {
     throw new ApiError(400, "Enter a valid email address");
   }
 
+  // 3) check if the user already exists
   const existedUser = await User.findOne({
     $or: [{ username }, { email }],
   });
@@ -29,6 +31,7 @@ const registerUser = asynchandler(async (req, res) => {
     throw new ApiError(409, "User already exists");
   }
 
+  // 4) handle file paths
   const avatarLocalPath = req.files?.avatar[0]?.path;
   const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
@@ -36,6 +39,7 @@ const registerUser = asynchandler(async (req, res) => {
     throw new ApiError(400, "Avatar file is required");
   }
 
+  // 5) upload on cloudinary
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
@@ -43,6 +47,7 @@ const registerUser = asynchandler(async (req, res) => {
     throw new ApiError(400, "Avatar file is required");
   }
 
+  // 6) create user
   const user = await User.create({
     fullName,
     avatar: avatar.url,
@@ -52,6 +57,7 @@ const registerUser = asynchandler(async (req, res) => {
     username: username.toLowerCase(),
   });
 
+  // 7) send response
   const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
@@ -62,7 +68,7 @@ const registerUser = asynchandler(async (req, res) => {
 
   return res
     .status(201)
-    .json(new ApiResponse(200, createdUser, "User registered successfully"));
+    .json(new ApiResponse(201, createdUser, "User registered successfully"));
 });
 
 export { registerUser };
