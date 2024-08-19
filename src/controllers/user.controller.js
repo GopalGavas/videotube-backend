@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
+import { deleteFromCloudinary } from "../utils/cloudinaryDelete.js";
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
   try {
@@ -324,7 +325,10 @@ const updateUserAvatar = asynchandler(async (req, res) => {
     throw new ApiError(400, "Can't upload file on Cloudinary");
   }
 
-  const user = await User.findByIdAndUpdate(
+  const user = await User.findById(req.user?._id).select("avatar");
+  const oldAvatar = user?.avatar;
+
+  const updatedUser = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -334,9 +338,15 @@ const updateUserAvatar = asynchandler(async (req, res) => {
     { new: true }
   ).select("-password");
 
+  if (oldAvatar) {
+    const publicId = oldAvatar.splilt("/").pop().splilt(".")[0];
+    console.log(publicId);
+    await deleteFromCloudinary(publicId);
+  }
+
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "avatar updated successfully"));
+    .json(new ApiResponse(200, updatedUser, "avatar updated successfully"));
 });
 
 const updateUserCoverImage = asynchandler(async (req, res) => {
