@@ -339,7 +339,8 @@ const updateUserAvatar = asynchandler(async (req, res) => {
   ).select("-password");
 
   if (oldAvatar) {
-    const publicId = oldAvatar.splilt("/").pop().splilt(".")[0];
+    const publicId = oldAvatar.split("/").pop().split(".")[0];
+
     console.log(publicId);
     await deleteFromCloudinary(publicId);
   }
