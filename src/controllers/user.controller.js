@@ -329,7 +329,7 @@ const updateUserAvatar = asynchandler(async (req, res) => {
   const user = await User.findById(req.user?._id).select("avatar");
   const oldAvatar = user?.avatar;
 
-  const updatedUser = await User.findByIdAndUpdate(
+  const updateUser = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -348,7 +348,7 @@ const updateUserAvatar = asynchandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, updatedUser, "avatar updated successfully"));
+    .json(new ApiResponse(200, updateUser, "avatar updated successfully"));
 });
 
 const updateUserCoverImage = asynchandler(async (req, res) => {
@@ -364,7 +364,10 @@ const updateUserCoverImage = asynchandler(async (req, res) => {
     throw new ApiError(400, "Error while uploading file on cloudinary");
   }
 
-  const user = await User.findByIdAndUpdate(
+  const user = await User.findById(req.user).select("coverImage");
+  const oldCoverImage = user?.coverImage;
+
+  const updateUser = await User.findByIdAndUpdate(
     req.user?._id,
     {
       $set: {
@@ -376,9 +379,16 @@ const updateUserCoverImage = asynchandler(async (req, res) => {
     }
   );
 
+  if (oldCoverImage) {
+    const publicId = oldCoverImage.split("/").pop().split(".")[0];
+
+    console.log(publicId);
+    await deleteFromCloudinary(publicId);
+  }
+
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "CoverImage updated successfully"));
+    .json(new ApiResponse(200, updateUser, "CoverImage updated successfully"));
 });
 
 const getUserChannelProfile = asynchandler(async (req, res) => {
