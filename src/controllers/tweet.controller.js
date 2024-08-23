@@ -1,8 +1,8 @@
 import { asynchandler } from "../utils/asynchandler.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/apiError.js";
-import { User } from "../models/user.model.js";
 import { Tweet } from "../models/tweet.model.js";
+import mongoose from "mongoose";
 
 const createTweet = asynchandler(async (req, res) => {
   const { content } = req.body;
@@ -98,77 +98,81 @@ const deleteTweet = asynchandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Tweet deleted successfully"));
 });
 
-// const getUserTweets = asynchandler(async (req, res) => {
-//   const { username } = req.params;
+const getUserTweets = asynchandler(async (req, res) => {
+  const { userId } = req.params;
 
-//   if (!username) {
-//     throw new ApiError(400, "username does not exists");
-//   }
+  if (!userId) {
+    throw new ApiError(404, "User not found");
+  }
 
-//   const tweet = await Tweet.aggregate([
-//     {
-//       $match: {
-//         owner: new mongoose.Types.ObjectId(req.user._id),
-//       },
-//     },
-//     {
-//       $lookup: {
-//         from: "users",
-//         localField: "owner",
-//         foreignField: "_id",
-//         as: "owner",
-//         pipeline: [
-//           {
-//             $project: {
-//               username: 1,
-//               "avatar.url": 1,
-//             },
-//           },
-//         ],
-//       },
-//     },
-//     {
-//       $lookup: {
-//         from: "likes",
-//         localField: "_id",
-//         foreignField: "tweet",
-//         as: "likeDetails",
-//         pipeline: [
-//           {
-//             $project: {
-//               likedBy: 1,
-//             },
-//           },
-//         ],
-//       },
-//     },
-//     {
-//       $addFields: {
-//         likesCount: {
-//           $size: "$likeDetails",
-//         },
-//         ownerDetails: {
-//           $size: "$owner",
-//         },
-//         isLiked: {
-//           $cond: {
-//             if: { $in: [req.user?._id, "$likeDetails.likedBy"] },
-//             then: true,
-//             else: false,
-//           },
-//         },
-//       },
-//     },
-//     {
-//       $project: {
-//         content: 1,
-//         ownerDetails: 1,
-//         likesCount: 1,
-//         isLiked: 1,
-//         createdAt: 1,
-//       },
-//     },
-//   ]);
-// });
+  const tweets = await Tweet.aggregate([
+    {
+      $match: {
+        owner: new mongoose.Types.ObjectId(userId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "ownerDetails",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "tweet",
+        as: "likeDetails",
+        pipeline: [
+          {
+            $project: {
+              likedBy: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        ownerDetails: {
+          $first: "$ownerDetails",
+        },
+        likesCount: {
+          $size: "$likeDetails",
+        },
+        isLikedBy: {
+          $cond: {
+            if: { $in: [req.user?._id, "$likeDetails.likedBy"] },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        content: 1,
+        ownerDetails: 1,
+        likesCount: 1,
+        isLikedBy: 1,
+        createdAt: 1,
+      },
+    },
+  ]);
 
-export { createTweet, updateUserTweet, deleteTweet };
+  return res
+    .status(200)
+    .json(new ApiResponse(200, tweets, "Tweets fetched successfully"));
+});
+
+export { createTweet, updateUserTweet, deleteTweet, getUserTweets };
