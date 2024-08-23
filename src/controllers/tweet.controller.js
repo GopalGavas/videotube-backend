@@ -2,7 +2,7 @@ import { asynchandler } from "../utils/asynchandler.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/apiError.js";
 import { Tweet } from "../models/tweet.model.js";
-import mongoose from "mongoose";
+import { User } from "../models/user.model.js";
 
 const createTweet = asynchandler(async (req, res) => {
   const { content } = req.body;
@@ -99,16 +99,22 @@ const deleteTweet = asynchandler(async (req, res) => {
 });
 
 const getUserTweets = asynchandler(async (req, res) => {
-  const { userId } = req.params;
+  const { username } = req.params;
 
-  if (!userId) {
+  if (!username) {
+    throw new ApiError(404, "Username is required");
+  }
+
+  const user = await User.findOne({ username: username.toLowerCase() });
+
+  if (!user) {
     throw new ApiError(404, "User not found");
   }
 
   const tweets = await Tweet.aggregate([
     {
       $match: {
-        owner: new mongoose.Types.ObjectId(userId),
+        owner: user._id,
       },
     },
     {
