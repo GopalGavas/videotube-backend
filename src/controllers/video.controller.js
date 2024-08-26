@@ -6,6 +6,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { formatDuration } from "../utils/formatDuration.js";
 import mongoose from "mongoose";
+import { deleteFromCloudinary } from "../utils/cloudinaryDelete.js";
 
 const publishAVideo = asynchandler(async (req, res) => {
   const { title, description } = req.body;
@@ -180,8 +181,118 @@ const getVideoById = asynchandler(async (req, res) => {
     .json(new ApiResponse(200, video[0], "video details fetched successfully"));
 });
 
-const updateVideo = asynchandler(async (req, res) => {});
+const updateVideoDetails = asynchandler(async (req, res) => {
+  const { title, description } = req.body;
+  const { videoId } = req.params;
+
+  if (!title?.trim() || !description?.trim()) {
+    throw new ApiError(400, "title and description are required");
+  }
+
+  if (!videoId) {
+    throw new ApiError(400, "Invalid Video Id");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (video.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(401, "You are not allowed to update the Video");
+  }
+
+  const updatedVideoDetails = await Video.findByIdAndUpdate(
+    video._id,
+    {
+      $set: {
+        title,
+        description,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!updatedVideoDetails) {
+    throw new ApiError(500, "Failed to update user details");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updatedVideoDetails,
+        "Updated Video details successfully"
+      )
+    );
+});
+
+const updateVideoThumbnail = asynchandler(async (req, res) => {
+  const { videoId } = req.params;
+  const thumbnailLocalPath = req.file?.path;
+
+  if (!videoId) {
+    throw new ApiError(400, "Invalid Video Id");
+  }
+
+  if (!thumbnailLocalPath) {
+    throw new ApiError(400, "Could not find localPath for thumbnail");
+  }
+
+  const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+
+  if (!thumbnail.url) {
+    throw new ApiError(400, "Error while uploading file on Cloudinary");
+  }
+
+  const video = await Video.findById(videoId).select("thumbnail");
+  const oldThumbnail = video?.thumbnail;
+
+  const updatedThumbnail = await Video.findByIdAndUpdate(
+    video?._id,
+    {
+      $set: {
+        thumbnail: thumbnail?.url,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!updatedThumbnail) {
+    throw new ApiError(
+      500,
+      "Something went wrong while updating the thumbnail"
+    );
+  }
+
+  if (oldThumbnail) {
+    const publicId = oldThumbnail.split("/").pop().split(".")[0];
+
+    await deleteFromCloudinary(publicId);
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updatedThumbnail,
+        "Successfully updated Video Thumbnail"
+      )
+    );
+});
 
 const deleteVideo = asynchandler(async (req, res) => {});
 
-export { publishAVideo, getVideoById };
+export {
+  publishAVideo,
+  getVideoById,
+  updateVideoDetails,
+  updateVideoThumbnail,
+};
