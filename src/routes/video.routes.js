@@ -26,9 +26,9 @@ router.route("/upload-video").post(
 );
 
 router.route("/:videoId").get(verifyJWT, getVideoById);
-router.route("/update-details/:videoId").post(verifyJWT, updateVideoDetails);
+router.route("/:videoId/details").patch(verifyJWT, updateVideoDetails);
 router
-  .route("/update-thumbnail/:videoId")
-  .post(verifyJWT, upload.single("thumbnail"), updateVideoThumbnail);
+  .route("/:videoId/thumbnail")
+  .patch(verifyJWT, upload.single("thumbnail"), updateVideoThumbnail);
 
 export default router;

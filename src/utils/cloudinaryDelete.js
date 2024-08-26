@@ -11,7 +11,7 @@ const deleteFromCloudinary = async (publicId) => {
   try {
     if (!publicId) return null;
     const response = await cloudinary.uploader.destroy(publicId);
-    console.log("Old avatar/coverImage deleted successfully");
+    console.log("Old Image deleted successfully");
     return response;
   } catch (error) {
     throw new ApiError(
