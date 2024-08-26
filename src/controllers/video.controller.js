@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { Video } from "../models/video.model.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { formatDuration } from "../utils/formatDuration.js";
 
 const publishAVideo = asynchandler(async (req, res) => {
   const { title, description } = req.body;
@@ -38,7 +39,7 @@ const publishAVideo = asynchandler(async (req, res) => {
     owner: req.user?._id,
     title,
     description,
-    duration: videoFile.duration,
+    duration: formatDuration(videoFile.duration),
     isPublished: true,
   });
 
@@ -53,4 +54,26 @@ const publishAVideo = asynchandler(async (req, res) => {
     .json(new ApiResponse(200, videoUpload, "Video uploaded successfully"));
 });
 
-export { publishAVideo };
+const getVideoById = asynchandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!videoId) {
+    throw new ApiError(400, "Invalid vidoe Id");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "Video fetched successfully"));
+});
+
+const updateVideo = asynchandler(async (req, res) => {});
+
+const deleteVideo = asynchandler(async (req, res) => {});
+
+export { publishAVideo, getVideoById };
