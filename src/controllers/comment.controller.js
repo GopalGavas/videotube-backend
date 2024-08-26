@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { Comment } from "../models/comment.model.js";
 import { Video } from "../models/video.model.js";
+import { Like } from "../models/like.model.js";
 import mongoose from "mongoose";
 
 const addComment = asynchandler(async (req, res) => {
@@ -95,6 +96,11 @@ const deleteComment = asynchandler(async (req, res) => {
   }
 
   await Comment.findByIdAndDelete(comment?._id);
+
+  await Like.deleteMany({
+    comment: comment?._id,
+    likedBy: req.user,
+  });
 
   return res
     .status(200)

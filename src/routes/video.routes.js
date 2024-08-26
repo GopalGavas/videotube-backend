@@ -23,6 +23,6 @@ router.route("/upload-video").post(
   publishAVideo
 );
 
-router.route("/:videoId").get(getVideoById);
+router.route("/:videoId").get(verifyJWT, getVideoById);
 
 export default router;
