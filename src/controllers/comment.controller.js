@@ -111,13 +111,17 @@ const getVideoComments = asynchandler(async (req, res) => {
   const { videoId } = req.params;
   const { page = 1, limit = 10 } = req.query;
 
+  if (!videoId) {
+    throw new ApiError(400, "Invalid Video Id");
+  }
+
   const video = await Video.findById(videoId);
 
   if (!video) {
     throw new ApiError(404, "Video not found");
   }
 
-  const commentsAggregate = Comment.aggregate([
+  const getAllComments = Comment.aggregate([
     {
       $match: {
         video: new mongoose.Types.ObjectId(videoId),
@@ -147,7 +151,7 @@ const getVideoComments = asynchandler(async (req, res) => {
         owner: {
           $first: "$owner",
         },
-        isLiked: {
+        isLikedBy: {
           $cond: {
             if: { $in: [req.user?._id, "$likes.likedBy"] },
             then: true,
@@ -164,14 +168,13 @@ const getVideoComments = asynchandler(async (req, res) => {
     {
       $project: {
         content: 1,
-        createdAt: 1,
         likesCount: 1,
+        isLikedBy: 1,
         owner: {
           username: 1,
-          fullName: 1,
-          "avatar.url": 1,
+          avatar: 1,
         },
-        isLiked: 1,
+        createdAt: 1,
       },
     },
   ]);
@@ -181,11 +184,11 @@ const getVideoComments = asynchandler(async (req, res) => {
     limit: parseInt(limit, 10),
   };
 
-  const comments = await Comment.aggregatePaginate(commentsAggregate, options);
+  const comments = await Comment.aggregatePaginate(getAllComments, options);
 
   return res
     .status(200)
-    .json(new ApiResponse(200, comments, "All comments fetched successfully"));
+    .json(new ApiResponse(200, comments, "Comments fetched successfully"));
 });
 
 export { addComment, updateComment, deleteComment, getVideoComments };
