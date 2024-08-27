@@ -109,7 +109,7 @@ const deleteComment = asynchandler(async (req, res) => {
 
 const getVideoComments = asynchandler(async (req, res) => {
   const { videoId } = req.params;
-  const { page = 1, limit = 10 } = req.queru;
+  const { page = 1, limit = 10 } = req.query;
 
   const video = await Video.findById(videoId);
 
@@ -117,7 +117,7 @@ const getVideoComments = asynchandler(async (req, res) => {
     throw new ApiError(404, "Video not found");
   }
 
-  const getAllComments = await Comment.aggregate([
+  const commentsAggregate = Comment.aggregate([
     {
       $match: {
         video: new mongoose.Types.ObjectId(videoId),
@@ -147,7 +147,7 @@ const getVideoComments = asynchandler(async (req, res) => {
         owner: {
           $first: "$owner",
         },
-        isLikedBy: {
+        isLiked: {
           $cond: {
             if: { $in: [req.user?._id, "$likes.likedBy"] },
             then: true,
@@ -167,10 +167,11 @@ const getVideoComments = asynchandler(async (req, res) => {
         createdAt: 1,
         likesCount: 1,
         owner: {
-          avatar: 1,
           username: 1,
+          fullName: 1,
+          "avatar.url": 1,
         },
-        isLikedBy: 1,
+        isLiked: 1,
       },
     },
   ]);
@@ -180,7 +181,7 @@ const getVideoComments = asynchandler(async (req, res) => {
     limit: parseInt(limit, 10),
   };
 
-  const comments = await Comment.aggregatePaginate(getAllComments, options);
+  const comments = await Comment.aggregatePaginate(commentsAggregate, options);
 
   return res
     .status(200)
