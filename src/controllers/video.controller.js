@@ -16,8 +16,8 @@ const publishAVideo = asynchandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  const videoFileLocalPath = req.files?.videoFile[0]?.path;
-  const thumbnailLocalPath = req.files?.thumbnail[0]?.path;
+  const videoFileLocalPath = req.files?.videoFile?.[0]?.path;
+  const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
 
   if (!videoFileLocalPath) {
     throw new ApiError(400, "could not locate Video File Locally");
@@ -308,6 +308,7 @@ const deleteVideo = asynchandler(async (req, res) => {
   const thumbnail = video?.thumbnail;
 
   const publicIdVideoFile = videoFile.split("/").pop().split(".")[0];
+  console.log(publicIdVideoFile);
   const publicIdThumbNailFile = thumbnail.split("/").pop().split(".")[0];
 
   if (video.owner.toString() !== req.user?._id.toString()) {
@@ -323,7 +324,7 @@ const deleteVideo = asynchandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while deleting the Video");
   }
 
-  await deleteFromCloudinary(publicIdVideoFile);
+  await deleteFromCloudinary(publicIdVideoFile, "video");
   await deleteFromCloudinary(publicIdThumbNailFile);
 
   await Like.deleteMany({

@@ -7,10 +7,12 @@ cloudinary.config({
   api_secret: `${process.env.CLOUDINARY_API_SECRET}`,
 });
 
-const deleteFromCloudinary = async (publicId) => {
+const deleteFromCloudinary = async (publicId, resource_type = "image") => {
   try {
     if (!publicId) return null;
-    const response = await cloudinary.uploader.destroy(publicId);
+    const response = await cloudinary.uploader.destroy(publicId, {
+      resource_type: `${resource_type}`,
+    });
     console.log("Old Image deleted successfully");
     return response;
   } catch (error) {
