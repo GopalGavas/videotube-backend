@@ -3,6 +3,7 @@ import {
   deleteVideo,
   getVideoById,
   publishAVideo,
+  togglePublishStatus,
   updateVideoDetails,
   updateVideoThumbnail,
 } from "../controllers/video.controller.js";
@@ -33,5 +34,6 @@ router
   .patch(verifyJWT, upload.single("thumbnail"), updateVideoThumbnail);
 
 router.route("/:videoId").delete(verifyJWT, deleteVideo);
+router.route("/status/:videoId").patch(verifyJWT, togglePublishStatus);
 
 export default router;
