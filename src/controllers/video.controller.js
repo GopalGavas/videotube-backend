@@ -4,9 +4,10 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { Video } from "../models/video.model.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
-import { formatDuration } from "../utils/formatDuration.js";
-import mongoose from "mongoose";
 import { deleteFromCloudinary } from "../utils/cloudinaryDelete.js";
+import mongoose from "mongoose";
+import { Like } from "../models/like.model.js";
+import { Comment } from "../models/comment.model.js";
 
 const publishAVideo = asynchandler(async (req, res) => {
   const { title, description } = req.body;
@@ -41,7 +42,7 @@ const publishAVideo = asynchandler(async (req, res) => {
     owner: req.user?._id,
     title,
     description,
-    duration: formatDuration(videoFile.duration),
+    duration: videoFile.duration,
     isPublished: true,
   });
 
@@ -288,11 +289,60 @@ const updateVideoThumbnail = asynchandler(async (req, res) => {
     );
 });
 
-const deleteVideo = asynchandler(async (req, res) => {});
+const deleteVideo = asynchandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!videoId) {
+    throw new ApiError(400, "Invalid Video Id");
+  }
+
+  const video = await Video.findById(videoId).select(
+    "thumbnail videoFile owner"
+  );
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  const videoFile = video?.videoFile;
+  const thumbnail = video?.thumbnail;
+
+  const publicIdVideoFile = videoFile.split("/").pop().split(".")[0];
+  const publicIdThumbNailFile = thumbnail.split("/").pop().split(".")[0];
+
+  if (video.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(
+      401,
+      "Unauthorized!! You are not allowed to delete this video"
+    );
+  }
+
+  const deletedVideo = await Video.findByIdAndDelete(videoId);
+
+  if (!deletedVideo) {
+    throw new ApiError(500, "Something went wrong while deleting the Video");
+  }
+
+  await deleteFromCloudinary(publicIdVideoFile);
+  await deleteFromCloudinary(publicIdThumbNailFile);
+
+  await Like.deleteMany({
+    video: videoId,
+  });
+
+  await Comment.deleteMany({
+    video: videoId,
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Video deleted Successfully"));
+});
 
 export {
   publishAVideo,
   getVideoById,
   updateVideoDetails,
   updateVideoThumbnail,
+  deleteVideo,
 };
