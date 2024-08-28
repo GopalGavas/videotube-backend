@@ -1,0 +1,210 @@
+import { asynchandler } from "../utils/asynchandler.js";
+import { ApiError } from "../utils/apiError.js";
+import { ApiResponse } from "../utils/apiResponse.js";
+import { Playlist } from "../models/playlist.model.js";
+import { Video } from "../models/video.model.js";
+import { User } from "../models/user.model.js";
+
+const createPlaylist = asynchandler(async (req, res) => {
+  const { title, description } = req.body;
+
+  if ([title, description].some((fields) => fields.trim() === "")) {
+    throw new ApiError(400, "All fields are required");
+  }
+
+  const playlist = await Playlist.create({
+    title,
+    description,
+    owner: req.user?._id,
+  });
+
+  if (!playlist) {
+    throw new ApiError(500, "Failed to create Playlist");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, playlist, "Playlist created successfully"));
+});
+
+const updatePlaylist = asynchandler(async (req, res) => {
+  const { playlistId } = req.params;
+  const { title, description } = req.body;
+
+  if (!playlistId) {
+    throw new ApiError(400, "Invalid PlayList Id");
+  }
+
+  if (!title || !description) {
+    throw new ApiError(400, "title and description is required");
+  }
+
+  const playlist = await Playlist.findById(playlistId);
+
+  if (!playlist) {
+    throw new ApiError(404, "Playlist not found");
+  }
+
+  if (playlist?.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(
+      401,
+      "Unauthorized!! You are not allowed to update this playlist"
+    );
+  }
+
+  const updatedPlaylist = await Playlist.findByIdAndUpdate(
+    playlistId,
+    {
+      $set: {
+        title,
+        description,
+      },
+    },
+    { new: true }
+  );
+
+  if (!updatedPlaylist) {
+    throw new ApiError(500, "Something went wrong while updating the playlist");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, updatedPlaylist, "Playlist updated successfully")
+    );
+});
+
+const deletePlaylist = asynchandler(async (req, res) => {
+  const { playlistId } = req.params;
+
+  if (!playlistId) {
+    throw new ApiError(400, "Invalid  playlist Id");
+  }
+
+  const playlist = await Playlist.findById(playlistId);
+
+  if (!playlist) {
+    throw new ApiError(404, "Playlist not found");
+  }
+
+  if (playlist?.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(
+      401,
+      "Unauthorized!! You are not allowed to delete this video"
+    );
+  }
+
+  const deletedPlaylist = await Playlist.findByIdAndDelete(playlistId);
+
+  if (!deletedPlaylist) {
+    throw new ApiError(500, "Something went wrong while deleting the playlist");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Playlist deleted successfully"));
+});
+
+const addVideoToPlaylist = asynchandler(async (req, res) => {
+  const { playlistId, videoId } = req.params;
+
+  if (!playlistId || !videoId) {
+    throw new ApiError(400, "Invalid PlaylistId or VideoId");
+  }
+
+  const playlist = await Playlist.findById(playlistId);
+
+  if (!playlist) {
+    throw new ApiError(404, "Playlist not found");
+  }
+
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (playlist.owner.toString() !== req.user?._id) {
+    throw new ApiError(
+      401,
+      "Unauthorized!! you are not authorized for this action"
+    );
+  }
+
+  const addVideo = await Playlist.findByIdAndUpdate(
+    playlistId,
+    {
+      $addToSet: {
+        videos: video?._id,
+      },
+    },
+    { new: true }
+  );
+
+  if (!addVideo) {
+    throw new ApiError(500, "Failed to add video to the playlist");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, addVideo, "Video added to playlist successfully")
+    );
+});
+
+const removeVideoFromPlaylist = asynchandler(async (req, res) => {
+  const { playlistId, videoId } = req.params;
+
+  if (!playlistId || !videoId) {
+    throw new ApiError(400, "Invalid PlaylistId or VideoId");
+  }
+
+  const playlist = await Playlist.findById(playlistId);
+
+  if (!playlist) {
+    throw new ApiError(404, "Playlist not found");
+  }
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (playlist?.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(
+      401,
+      "Unauthorized!! you are not authorized for this action"
+    );
+  }
+
+  const removeVideo = await Playlist.findByIdAndUpdate(
+    playlistId,
+    {
+      $pull: {
+        videos: video?._id,
+      },
+    },
+    { new: true }
+  );
+
+  if (!removeVideo) {
+    throw new ApiError(
+      500,
+      "Something went wrong while removing the video from the playlist"
+    );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, {}, "Successfully video removed from the Playlist")
+    );
+});
+
+export {
+  createPlaylist,
+  updatePlaylist,
+  deletePlaylist,
+  addVideoToPlaylist,
+  removeVideoFromPlaylist,
+};
