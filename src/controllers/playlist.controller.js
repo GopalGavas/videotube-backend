@@ -32,14 +32,14 @@ const createPlaylist = asynchandler(async (req, res) => {
 
 const updatePlaylist = asynchandler(async (req, res) => {
   const { playlistId } = req.params;
-  const { title, description } = req.body;
+  const { name, description } = req.body;
 
   if (!playlistId) {
     throw new ApiError(400, "Invalid PlayList Id");
   }
 
-  if (!title || !description) {
-    throw new ApiError(400, "title and description is required");
+  if (!name || !description) {
+    throw new ApiError(400, "name and description is required");
   }
 
   const playlist = await Playlist.findById(playlistId);
@@ -59,7 +59,7 @@ const updatePlaylist = asynchandler(async (req, res) => {
     playlistId,
     {
       $set: {
-        title,
+        name,
         description,
       },
     },
@@ -127,7 +127,7 @@ const addVideoToPlaylist = asynchandler(async (req, res) => {
     throw new ApiError(404, "Video not found");
   }
 
-  if (playlist.owner.toString() !== req.user?._id) {
+  if (playlist?.owner.toString() !== req.user?._id.toString()) {
     throw new ApiError(
       401,
       "Unauthorized!! you are not authorized for this action"
@@ -211,10 +211,16 @@ const getPlaylistById = asynchandler(async (req, res) => {
     throw new ApiError(400, "Invalid Playlist Id");
   }
 
-  const playlist = await Playlist.aggregate([
+  const playlist = await Playlist.findById(playlistId);
+
+  if (!playlist) {
+    throw new ApiError(404, "Playlist not found");
+  }
+
+  const playlistVideos = await Playlist.aggregate([
     {
       $match: {
-        playlist: new mongoose.Types.ObjectId(playlistId),
+        _id: new mongoose.Types.ObjectId(playlistId),
       },
     },
     {
@@ -256,7 +262,7 @@ const getPlaylistById = asynchandler(async (req, res) => {
         createdAt: 1,
         updatedAt: 1,
         videos: {
-          id: 1,
+          _id: 1,
           videoFile: 1,
           thumbnail: 1,
           title: 1,
@@ -273,9 +279,13 @@ const getPlaylistById = asynchandler(async (req, res) => {
     },
   ]);
 
+  console.log(playlistVideos);
+
   return res
     .status(200)
-    .json(new ApiResponse(200, playlist, "Playlist fetched successfully"));
+    .json(
+      new ApiResponse(200, playlistVideos, "Playlist fetched successfully")
+    );
 });
 
 const getUsersPlaylist = asynchandler(async (req, res) => {
