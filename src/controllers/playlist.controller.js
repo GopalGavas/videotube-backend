@@ -4,16 +4,19 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { Playlist } from "../models/playlist.model.js";
 import { Video } from "../models/video.model.js";
 import { User } from "../models/user.model.js";
+import mongoose from "mongoose";
 
 const createPlaylist = asynchandler(async (req, res) => {
-  const { title, description } = req.body;
+  const { name, description } = req.body;
 
-  if ([title, description].some((fields) => fields.trim() === "")) {
-    throw new ApiError(400, "All fields are required");
+  console.log(name, description);
+
+  if (!name || !description) {
+    throw new ApiError(400, "Name and Description is required");
   }
 
   const playlist = await Playlist.create({
-    title,
+    name,
     description,
     owner: req.user?._id,
   });
@@ -201,10 +204,137 @@ const removeVideoFromPlaylist = asynchandler(async (req, res) => {
     );
 });
 
+const getPlaylistById = asynchandler(async (req, res) => {
+  const { playlistId } = req.params;
+
+  if (!playlistId) {
+    throw new ApiError(400, "Invalid Playlist Id");
+  }
+
+  const playlist = await Playlist.aggregate([
+    {
+      $match: {
+        playlist: new mongoose.Types.ObjectId(playlistId),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "videos",
+        foreignField: "_id",
+        as: "playlistVideos",
+      },
+    },
+    {
+      $match: {
+        "videos.isPublished": true,
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "playlistOwner",
+      },
+    },
+    {
+      $addFields: {
+        allVideos: {
+          $size: "$playlistVideos",
+        },
+        owner: {
+          $first: "$owner",
+        },
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        description: 1,
+        allVideos: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        videos: {
+          id: 1,
+          videoFile: 1,
+          thumbnail: 1,
+          title: 1,
+          description: 1,
+          views: 1,
+          duration: 1,
+          createdAt: 1,
+        },
+        owner: {
+          username: 1,
+          avatar: 1,
+        },
+      },
+    },
+  ]);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, playlist, "Playlist fetched successfully"));
+});
+
+const getUsersPlaylist = asynchandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!userId) {
+    throw new ApiError("Invalid User Id");
+  }
+
+  const userPlaylist = await Playlist.aggregate([
+    {
+      $match: {
+        owner: new mongoose.Types.ObjectId(userId),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "videos",
+        foreignField: "_id",
+        as: "playlistVideos",
+      },
+    },
+    {
+      $addFields: {
+        playlist: {
+          $size: "$playlistVideos",
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        description: 1,
+        playlist: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    },
+  ]);
+
+  if (!userPlaylist) {
+    throw new ApiError(500, "Problem while fetching Users Playlist");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, userPlaylist, "Users playlist fetched successfully")
+    );
+});
+
 export {
   createPlaylist,
   updatePlaylist,
   deletePlaylist,
   addVideoToPlaylist,
   removeVideoFromPlaylist,
+  getPlaylistById,
+  getUsersPlaylist,
 };
