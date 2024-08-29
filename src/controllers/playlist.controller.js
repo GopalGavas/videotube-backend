@@ -228,7 +228,7 @@ const getPlaylistById = asynchandler(async (req, res) => {
         from: "videos",
         localField: "videos",
         foreignField: "_id",
-        as: "playlistVideos",
+        as: "videos",
       },
     },
     {
@@ -247,10 +247,10 @@ const getPlaylistById = asynchandler(async (req, res) => {
     {
       $addFields: {
         allVideos: {
-          $size: "$playlistVideos",
+          $size: "$videos",
         },
         owner: {
-          $first: "$owner",
+          $first: "$playlistOwner",
         },
       },
     },
@@ -279,12 +279,10 @@ const getPlaylistById = asynchandler(async (req, res) => {
     },
   ]);
 
-  console.log(playlistVideos);
-
   return res
     .status(200)
     .json(
-      new ApiResponse(200, playlistVideos, "Playlist fetched successfully")
+      new ApiResponse(200, playlistVideos[0], "Playlist fetched successfully")
     );
 });
 
