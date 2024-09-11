@@ -60,10 +60,15 @@ npm run dev
 
 ## API Endpoints
 
-- /api/v1/videos: For video CRUD operations
-- /api/v1/comments: For adding and retrieving comments on videos
-- /api/v1/playlists: For managing playlists
-- /api/v1/subscriptions: For subscribing to/unsubscribing from channels
+- /api/v1/user: For user operations
+- /api/v1/video: For video CRUD operations
+- /api/v1/comment: For adding and retrieving comments on videos
+- /api/v1/likes: For liking videos and comments
+- /api/v1/playlist: For managing playlists
+- /api/v1/subscription: For subscribing to/unsubscribing from channels
+- /api/v1/dashboard: For displaying dashboard
+- /api/v1/tweet: For writing tweets
+- /api/v1/healthcheck: For verifying backend's health
 
 ## Contributing
 
