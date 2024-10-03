@@ -346,6 +346,7 @@ const getAllVideos = asynchandler(async (req, res) => {
 
   const pipeline = [];
 
+  // Perform text search
   if (query) {
     pipeline.push({
       $search: {
@@ -358,11 +359,11 @@ const getAllVideos = asynchandler(async (req, res) => {
     });
   }
 
+  // Filter by userId if provided
   if (userId) {
     if (!isValidObjectId(userId)) {
       throw new ApiError(400, "Invalid userId");
     }
-
     pipeline.push({
       $match: {
         owner: new mongoose.Types.ObjectId(userId),
@@ -370,8 +371,10 @@ const getAllVideos = asynchandler(async (req, res) => {
     });
   }
 
+  // Only published videos
   pipeline.push({ $match: { isPublished: true } });
 
+  // Sorting logic
   if (sortBy && sortType) {
     pipeline.push({
       $sort: {
@@ -382,6 +385,7 @@ const getAllVideos = asynchandler(async (req, res) => {
     pipeline.push({ $sort: { createdAt: -1 } });
   }
 
+  // Join owner details
   pipeline.push(
     {
       $lookup: {
@@ -404,14 +408,12 @@ const getAllVideos = asynchandler(async (req, res) => {
     }
   );
 
-  const videoAggregate = Video.aggregate(pipeline);
+  // Pagination logic: adding limit and skip for pagination AFTER sorting and matching
+  const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+  pipeline.push({ $skip: skip }, { $limit: parseInt(limit, 10) });
 
-  const options = {
-    page: parseInt(page, 10),
-    limit: parseInt(limit, 10),
-  };
-
-  const video = await Video.aggregatePaginate(videoAggregate, options);
+  // Execute the aggregation pipeline
+  const video = await Video.aggregate(pipeline);
 
   return res
     .status(200)
