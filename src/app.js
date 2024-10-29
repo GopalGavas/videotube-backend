@@ -2,7 +2,29 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
+// "SECURITY PACKAGES"
+import helmet from "helmet";
+import ExpressMongoSanitize from "express-mongo-sanitize";
+
 const app = express();
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true, // enables default CSP
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "trusted-cdn.com"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    frameguard: { action: "deny" },
+    referrerPolicy: { policy: "no-referrer" },
+  })
+);
+
+app.use(ExpressMongoSanitize());
 
 app.use(
   cors({
