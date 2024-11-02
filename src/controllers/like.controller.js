@@ -58,7 +58,7 @@ const toggleCommentLike = asynchandler(async (req, res) => {
   const { commentId } = req.params;
 
   if (!commentId) {
-    throw new ApiError("Invalid Comment Id");
+    throw new ApiError(400, "Invalid Comment Id");
   }
 
   const comment = await Comment.findById(commentId);
@@ -112,7 +112,10 @@ const toggleVideoLike = asynchandler(async (req, res) => {
   }).select("-tweet -comment");
 
   if (likedVideo) {
-    await Like.findByIdAndDelete(videoId);
+    await Like.findOneAndDelete({
+      video: videoId,
+      likedBy: req.user?._id,
+    });
 
     return res
       .status(200)
