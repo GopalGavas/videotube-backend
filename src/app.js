@@ -8,13 +8,15 @@ import ExpressMongoSanitize from "express-mongo-sanitize";
 
 const app = express();
 
+app.set("trust proxy", true);
+
 app.use(
   helmet({
     contentSecurityPolicy: {
       useDefaults: true, // enables default CSP
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "trusted-cdn.com"],
+        scriptSrc: ["'self'"],
         objectSrc: ["'none'"],
         upgradeInsecureRequests: [],
       },
