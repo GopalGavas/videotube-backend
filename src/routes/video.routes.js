@@ -13,7 +13,7 @@ import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
-router.route("/upload-video").post(
+router.route("/").post(
   verifyJWT,
   upload.fields([
     {
@@ -29,13 +29,13 @@ router.route("/upload-video").post(
 );
 
 router.route("/:videoId").get(verifyJWT, getVideoById);
-router.route("/:videoId/details").patch(verifyJWT, updateVideoDetails);
+router.route("/v/:videoId").patch(verifyJWT, updateVideoDetails);
 router
-  .route("/:videoId/thumbnail")
+  .route("/v/:videoId/thumbnail")
   .patch(verifyJWT, upload.single("thumbnail"), updateVideoThumbnail);
 
-router.route("/:videoId").delete(verifyJWT, deleteVideo);
-router.route("/status/:videoId").patch(verifyJWT, togglePublishStatus);
+router.route("/v/:videoId").delete(verifyJWT, deleteVideo);
+router.route("/v/:videoId/status").patch(verifyJWT, togglePublishStatus);
 router.route("/").get(verifyJWT, getAllVideos);
 
 export default router;
