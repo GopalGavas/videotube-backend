@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import { ApiError } from "./apiError.js";
 
 cloudinary.config({
   cloud_name: `${process.env.CLOUDINARY_CLOUD_NAME}`,
@@ -13,10 +14,6 @@ const uploadOnCloudinary = async (localFilePath) => {
     const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto",
     });
-    console.log(
-      "File has been successfully uploaded on cloudinary",
-      response.url
-    );
     fs.unlinkSync(localFilePath);
     return response;
   } catch (error) {
@@ -25,4 +22,19 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-export { uploadOnCloudinary };
+const deleteFromCloudinary = async (publicId, resource_type = "image") => {
+  try {
+    if (!publicId) return null;
+    const response = await cloudinary.uploader.destroy(publicId, {
+      resource_type: `${resource_type}`,
+    });
+    return response;
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "Something went wrong while deleting avatar/coverImage from cloudinary"
+    );
+  }
+};
+
+export { uploadOnCloudinary, deleteFromCloudinary };
