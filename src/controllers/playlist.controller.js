@@ -8,8 +8,6 @@ import mongoose from "mongoose";
 const createPlaylist = asynchandler(async (req, res) => {
   const { name, description } = req.body;
 
-  console.log(name, description);
-
   if (!name || !description) {
     throw new ApiError(400, "Name and Description is required");
   }

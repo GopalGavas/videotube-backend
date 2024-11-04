@@ -194,7 +194,6 @@ const logoutUser = asynchandler(async (req, res) => {
 const refreshAccessToken = asynchandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
-  console.log(incomingRefreshToken);
 
   if (!incomingRefreshToken) {
     throw new ApiError(401, "Unauthorized request");
@@ -343,8 +342,6 @@ const updateUserAvatar = asynchandler(async (req, res) => {
 
   if (oldAvatar) {
     const publicId = oldAvatar.split("/").pop().split(".")[0];
-
-    console.log(publicId);
     await deleteFromCloudinary(publicId);
   }
 
@@ -383,8 +380,6 @@ const updateUserCoverImage = asynchandler(async (req, res) => {
 
   if (oldCoverImage) {
     const publicId = oldCoverImage.split("/").pop().split(".")[0];
-
-    console.log(publicId);
     await deleteFromCloudinary(publicId);
   }
 

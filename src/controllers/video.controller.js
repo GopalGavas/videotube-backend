@@ -311,7 +311,6 @@ const deleteVideo = asynchandler(async (req, res) => {
   const thumbnail = video?.thumbnail;
 
   const publicIdVideoFile = videoFile.split("/").pop().split(".")[0];
-  console.log(publicIdVideoFile);
   const publicIdThumbNailFile = thumbnail.split("/").pop().split(".")[0];
 
   if (video.owner.toString() !== req.user?._id.toString()) {

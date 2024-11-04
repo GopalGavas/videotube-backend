@@ -44,8 +44,6 @@ const updateUserTweet = asynchandler(async (req, res) => {
   }
 
   if (tweet?.owner.toString() !== req.user?._id.toString()) {
-    // console.log("Tweet owner: ", tweet?.owner.toString());
-    // console.log("user id: ", req.user?._id);
     throw new ApiError(
       401,
       "Unauthorized: You do not have permission to update this tweet."
