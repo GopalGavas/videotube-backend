@@ -8,6 +8,7 @@ A powerful backend solution for VideoTube, a platform that enables users to uplo
 | --------------------- | ------------------------------------------------------------------------------- |
 | **Model Workspace**   | [Model Workspace](https://app.eraser.io/workspace/YtPqZ1VogxGy1jzIDkzj)         |
 | **API Documentation** | [API Documentation](https://documenter.getpostman.com/view/28528757/2sAY4yefx3) |
+| **Landing Page**      | [Landing Page](https://videotube-backend-q1uq.onrender.com)                     |
 
 ## ✨ **Features**
 
