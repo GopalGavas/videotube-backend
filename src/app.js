@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
 
 // "SECURITY PACKAGES"
 import helmet from "helmet";
@@ -47,6 +48,9 @@ app.use(express.static("public"));
 
 app.use(cookieParser());
 
+app.set("view engine", "ejs");
+app.set("views", path.resolve("./src/views"));
+
 // import routes
 import userRouter from "./routes/user.routes.js";
 import tweetRouter from "./routes/tweet.routes.js";
@@ -57,6 +61,7 @@ import playlistRouter from "./routes/playlist.routes.js";
 import subscriptionRouter from "./routes/subscription.routes.js";
 import dashboardRouter from "./routes/dashboard.routes.js";
 import healthCheckRouter from "./routes/healthCheck.routes.js";
+import homeRouter from "./routes/home.routes.js";
 
 // routes declaration
 app.use("/api/v1/users", userRouter);
@@ -68,6 +73,7 @@ app.use("/api/v1/playlist", playlistRouter);
 app.use("/api/v1/subscription", subscriptionRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
 app.use("/api/v1/healthcheck", healthCheckRouter);
+app.use("/", homeRouter);
 
 //http://localhost:8000/api/v1/user/register
 
