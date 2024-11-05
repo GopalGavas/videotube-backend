@@ -75,6 +75,4 @@ app.use("/api/v1/dashboard", dashboardRouter);
 app.use("/api/v1/healthcheck", healthCheckRouter);
 app.use("/", homeRouter);
 
-//http://localhost:8000/api/v1/user/register
-
 export { app };
